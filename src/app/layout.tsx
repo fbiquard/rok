@@ -17,6 +17,21 @@ export const metadata: Metadata = {
   title: "RÖK Ahumados — Carnes ahumadas a domicilio",
   description:
     "Pedí tu combo RÖK: 200g de carne, pollo, cerdo o veggie por persona, con panes de manteca y salsas. Entrega a domicilio en CABA.",
+  openGraph: {
+    title: "RÖK Ahumados",
+    description:
+      "Carnes ahumadas a domicilio. Armá tu combo y te lo llevamos a casa.",
+    images: [
+      {
+        url: "/menu/hero.png",
+        width: 2656,
+        height: 1600,
+        alt: "Combo RÖK servido en la mesa",
+      },
+    ],
+    locale: "es_AR",
+    type: "website",
+  },
 };
 
 export default function RootLayout({

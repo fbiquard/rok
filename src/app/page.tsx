@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { ArrowRight, Minus, Plus } from "lucide-react";
 import logo from "../../public/logo.png";
+import heroImg from "../../public/menu/hero.png";
 import { Button } from "@/components/ui/button";
 import { config, formatARS } from "@/lib/config";
 import { comboIncludes, proteins, type ProteinKey } from "@/lib/menu";
@@ -50,12 +51,26 @@ function Configurator() {
 
   return (
     <div className="flex flex-1 flex-col pb-36">
-      <header className="px-5 pt-6 pb-2 text-center">
+      <header className="text-center">
+        <div className="relative mx-auto aspect-[5/3] w-full max-w-2xl overflow-hidden sm:mt-4 sm:rounded-2xl">
+          <Image
+            src={heroImg}
+            alt="Combo RÖK servido en la mesa"
+            fill
+            priority
+            sizes="(min-width: 768px) 672px, 100vw"
+            className="object-cover"
+          />
+          <div
+            aria-hidden
+            className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background to-transparent"
+          />
+        </div>
         <Image
           src={logo}
           alt={`${config.business.name} ${config.business.tagline}`}
           priority
-          className="mx-auto h-24 w-auto mix-blend-screen sm:h-28"
+          className="mx-auto -mt-10 h-24 w-auto mix-blend-screen sm:h-28"
         />
       </header>
 
