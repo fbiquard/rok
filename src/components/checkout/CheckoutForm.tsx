@@ -191,22 +191,24 @@ export function CheckoutForm({ cart, backHref }: Props) {
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Fecha" htmlFor="deliveryDate">
               <Popover open={dateOpen} onOpenChange={setDateOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    id="deliveryDate"
-                    type="button"
-                    variant="outline"
-                    className="h-9 w-full justify-start font-normal"
-                  >
-                    <CalendarIcon className="size-4" />
-                    {selectedDate ? (
-                      format(selectedDate, "EEEE d 'de' MMMM", { locale: es })
-                    ) : (
-                      <span className="text-muted-foreground">
-                        Elegí una fecha
-                      </span>
-                    )}
-                  </Button>
+                <PopoverTrigger
+                  render={
+                    <Button
+                      id="deliveryDate"
+                      type="button"
+                      variant="outline"
+                      className="h-9 w-full justify-start font-normal"
+                    />
+                  }
+                >
+                  <CalendarIcon className="size-4" />
+                  {selectedDate ? (
+                    format(selectedDate, "EEEE d 'de' MMMM", { locale: es })
+                  ) : (
+                    <span className="text-muted-foreground">
+                      Elegí una fecha
+                    </span>
+                  )}
                 </PopoverTrigger>
                 <PopoverContent
                   className="w-auto p-0"
