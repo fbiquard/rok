@@ -6,6 +6,8 @@ export const config = {
   business: {
     name: "RÖK",
     tagline: "Ahumados",
+    intro:
+      "Carnes ahumadas a leña, lento y con paciencia. Llegan listas para servir en tu mesa: solo destapás y compartís.",
     whatsapp: "+5491156433030",
     whatsappDisplay: "+54 9 11 5643 3030",
   },

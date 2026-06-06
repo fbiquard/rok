@@ -72,6 +72,9 @@ function Configurator() {
           priority
           className="mx-auto -mt-10 h-24 w-auto mix-blend-screen sm:h-28"
         />
+        <p className="mx-auto mt-3 max-w-md text-balance px-6 text-sm leading-relaxed text-muted-foreground">
+          {config.business.intro}
+        </p>
       </header>
 
       <main className="mx-auto w-full max-w-2xl px-4">
