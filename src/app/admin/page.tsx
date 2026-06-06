@@ -37,26 +37,47 @@ export default function AdminHome() {
         </p>
       </header>
 
-      <section className="mt-6 space-y-3">
-        {upcoming.length === 0 ? (
-          <EmptyState />
-        ) : (
-          upcoming.map((order) => <OrderCard key={order.id} order={order} />)
-        )}
+      <section className="mt-8">
+        <div className="flex items-baseline justify-between">
+          <h2 className="text-xs font-medium uppercase tracking-[0.3em] text-primary/80">
+            Pendientes
+          </h2>
+          <span className="text-xs text-muted-foreground">
+            {upcoming.length}{" "}
+            {upcoming.length === 1 ? "pedido" : "pedidos"}
+          </span>
+        </div>
+        <div className="mt-3 space-y-3">
+          {upcoming.length === 0 ? (
+            <EmptyState />
+          ) : (
+            upcoming.map((order) => <OrderCard key={order.id} order={order} />)
+          )}
+        </div>
       </section>
 
-      {delivered.length > 0 && (
-        <section className="mt-10">
+      <section className="mt-10">
+        <div className="flex items-baseline justify-between">
           <h2 className="text-xs font-medium uppercase tracking-[0.3em] text-muted-foreground">
             Entregados
           </h2>
-          <div className="mt-3 space-y-3 opacity-60">
-            {delivered.map((order) => (
+          <span className="text-xs text-muted-foreground">
+            {delivered.length}{" "}
+            {delivered.length === 1 ? "pedido" : "pedidos"}
+          </span>
+        </div>
+        <div className="mt-3 space-y-3 opacity-60">
+          {delivered.length === 0 ? (
+            <p className="rounded-2xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
+              Todavía no hay entregas.
+            </p>
+          ) : (
+            delivered.map((order) => (
               <OrderCard key={order.id} order={order} />
-            ))}
-          </div>
-        </section>
-      )}
+            ))
+          )}
+        </div>
+      </section>
     </div>
   );
 }

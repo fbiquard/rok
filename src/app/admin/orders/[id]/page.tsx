@@ -194,36 +194,35 @@ function Row({
 
 function ActionBar({ order, wppLink }: { order: Order; wppLink: string }) {
   const meta = statusMeta[order.status];
+  const showWhatsApp = order.status !== "delivered";
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/60 bg-background/95 backdrop-blur">
-      <div className="mx-auto flex w-full max-w-xl items-center justify-between gap-3 px-4 py-3">
-        <div className="text-xs">
-          <p className="text-muted-foreground">Estado actual</p>
-          <p className="text-sm font-medium">{meta.label}</p>
-        </div>
-        {meta.nextStatus === "out_for_delivery" ? (
+      <div className="mx-auto flex w-full max-w-xl items-stretch gap-2 px-4 py-3">
+        {showWhatsApp && (
           <a
             href={wppLink}
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="Avisar al cliente por WhatsApp"
             className={cn(
-              buttonVariants({ size: "lg" }),
-              "h-12 rounded-full bg-emerald-500 px-5 text-base font-medium text-emerald-950 hover:bg-emerald-400",
+              buttonVariants({ variant: "outline", size: "lg" }),
+              "h-12 rounded-full border-emerald-500/40 px-4 text-emerald-300 hover:bg-emerald-500/10 hover:text-emerald-200",
             )}
           >
             <MessageCircle className="size-4" />
-            {meta.nextLabel}
+            Avisar
           </a>
-        ) : meta.nextStatus ? (
+        )}
+        {meta.nextStatus ? (
           <Button
             size="lg"
-            className="h-12 rounded-full px-5 text-base font-medium"
+            className="h-12 flex-1 rounded-full px-5 text-base font-medium"
           >
             {meta.nextLabel}
           </Button>
         ) : (
-          <span className="text-xs text-muted-foreground">
+          <span className="flex-1 self-center text-center text-sm text-muted-foreground">
             Pedido cerrado
           </span>
         )}
