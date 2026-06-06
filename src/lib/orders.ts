@@ -1,4 +1,5 @@
 import { config } from "./config";
+import { sql } from "./db";
 import { proteins, type ProteinKey } from "./menu";
 
 export type OrderStatus =
@@ -29,7 +30,13 @@ export type Order = {
   shipping: number;
   total: number;
   status: OrderStatus;
+  mpPaymentId?: string;
   createdAt: Date;
+};
+
+export type NewOrderInput = Omit<Order, "id" | "createdAt" | "status" | "mpPaymentId"> & {
+  status?: OrderStatus;
+  mpPaymentId?: string;
 };
 
 export const statusMeta: Record<
@@ -60,6 +67,58 @@ export const statusMeta: Record<
   },
 };
 
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+export function generateOrderId(): string {
+  const hex = Math.floor(Math.random() * 0xffffff)
+    .toString(16)
+    .toUpperCase()
+    .padStart(6, "0");
+  return `RK-${hex}`;
+}
+
+type OrderRow = {
+  id: string;
+  customer_name: string;
+  phone: string;
+  email: string;
+  address: string;
+  apartment: string | null;
+  neighborhood: string;
+  notes: string | null;
+  delivery_at: string;
+  delivery_slot: string;
+  items: OrderItem[];
+  subtotal: number;
+  shipping: number;
+  total: number;
+  status: OrderStatus;
+  mp_payment_id: string | null;
+  created_at: string;
+};
+
+function rowToOrder(row: OrderRow): Order {
+  return {
+    id: row.id,
+    customerName: row.customer_name,
+    phone: row.phone,
+    email: row.email,
+    address: row.address,
+    apartment: row.apartment ?? undefined,
+    neighborhood: row.neighborhood,
+    notes: row.notes ?? undefined,
+    deliveryAt: new Date(row.delivery_at),
+    deliverySlot: row.delivery_slot,
+    items: row.items,
+    subtotal: row.subtotal,
+    shipping: row.shipping,
+    total: row.total,
+    status: row.status,
+    mpPaymentId: row.mp_payment_id ?? undefined,
+    createdAt: new Date(row.created_at),
+  };
+}
+
 function makeItems(map: Partial<Record<ProteinKey, number>>): OrderItem[] {
   return proteins
     .map((p) => ({
@@ -77,11 +136,74 @@ function totals(items: OrderItem[]) {
   return { subtotal, shipping, total: subtotal + shipping };
 }
 
+// ─── DB queries ─────────────────────────────────────────────────────────────
+
+export async function listOrders(): Promise<Order[]> {
+  const rows = (await sql`
+    SELECT * FROM orders
+    ORDER BY delivery_at ASC
+  `) as OrderRow[];
+  return rows.map(rowToOrder);
+}
+
+export async function getOrderById(id: string): Promise<Order | undefined> {
+  const rows = (await sql`
+    SELECT * FROM orders WHERE id = ${id} LIMIT 1
+  `) as OrderRow[];
+  if (rows.length === 0) return undefined;
+  return rowToOrder(rows[0]);
+}
+
+export async function createOrder(input: NewOrderInput): Promise<Order> {
+  const id = generateOrderId();
+  const status = input.status ?? "paid";
+
+  const rows = (await sql`
+    INSERT INTO orders (
+      id, customer_name, phone, email, address, apartment, neighborhood, notes,
+      delivery_at, delivery_slot, items, subtotal, shipping, total, status, mp_payment_id
+    )
+    VALUES (
+      ${id}, ${input.customerName}, ${input.phone}, ${input.email}, ${input.address},
+      ${input.apartment ?? null}, ${input.neighborhood}, ${input.notes ?? null},
+      ${input.deliveryAt.toISOString()}, ${input.deliverySlot},
+      ${JSON.stringify(input.items)}::jsonb,
+      ${input.subtotal}, ${input.shipping}, ${input.total},
+      ${status}, ${input.mpPaymentId ?? null}
+    )
+    RETURNING *
+  `) as OrderRow[];
+
+  return rowToOrder(rows[0]);
+}
+
+export async function updateOrderStatus(
+  id: string,
+  status: OrderStatus,
+): Promise<Order | undefined> {
+  const rows = (await sql`
+    UPDATE orders SET status = ${status} WHERE id = ${id} RETURNING *
+  `) as OrderRow[];
+  if (rows.length === 0) return undefined;
+  return rowToOrder(rows[0]);
+}
+
+// ─── Seed (mocks para vista previa) ─────────────────────────────────────────
+
 /**
- * Pedidos de ejemplo (mock) para previsualizar el panel admin sin Supabase.
- * Las fechas se calculan relativas a `now` para que siempre se vean "actuales".
+ * Inserta 5 pedidos de ejemplo en la DB SI está vacía. Idempotente.
  */
-export function getMockOrders(now: Date = new Date()): Order[] {
+export async function seedMockOrdersIfEmpty(now: Date = new Date()): Promise<{
+  inserted: number;
+  alreadyHadOrders: boolean;
+}> {
+  const existing = (await sql`SELECT COUNT(*)::int as count FROM orders`) as {
+    count: number;
+  }[];
+  if (existing[0].count > 0) {
+    return { inserted: 0, alreadyHadOrders: true };
+  }
+
   const at = (daysOffset: number, hour: number, minute = 0): Date => {
     const d = new Date(now);
     d.setDate(d.getDate() + daysOffset);
@@ -89,9 +211,9 @@ export function getMockOrders(now: Date = new Date()): Order[] {
     return d;
   };
 
-  const orders: Order[] = [
+  const mocks: Array<NewOrderInput & { _id: string }> = [
     {
-      id: "RK-2614",
+      _id: "RK-002614",
       customerName: "Camila Riera",
       phone: "+5491165443322",
       email: "cami.riera@gmail.com",
@@ -104,10 +226,9 @@ export function getMockOrders(now: Date = new Date()): Order[] {
       items: makeItems({ carne: 2, pollo: 1 }),
       ...totals(makeItems({ carne: 2, pollo: 1 })),
       status: "out_for_delivery",
-      createdAt: at(-1, 18, 24),
     },
     {
-      id: "RK-2615",
+      _id: "RK-002615",
       customerName: "Mateo Salinas",
       phone: "+5491134567788",
       email: "mateo.salinas@hotmail.com",
@@ -118,10 +239,9 @@ export function getMockOrders(now: Date = new Date()): Order[] {
       items: makeItems({ cerdo: 3, veggie: 1 }),
       ...totals(makeItems({ cerdo: 3, veggie: 1 })),
       status: "preparing",
-      createdAt: at(-1, 11, 5),
     },
     {
-      id: "RK-2616",
+      _id: "RK-002616",
       customerName: "Sofía Aguirre",
       phone: "+5491178998877",
       email: "soa.aguirre@gmail.com",
@@ -134,10 +254,9 @@ export function getMockOrders(now: Date = new Date()): Order[] {
       items: makeItems({ carne: 1, cerdo: 2, veggie: 1 }),
       ...totals(makeItems({ carne: 1, cerdo: 2, veggie: 1 })),
       status: "paid",
-      createdAt: at(0, 17, 50),
     },
     {
-      id: "RK-2617",
+      _id: "RK-002617",
       customerName: "Iván Pereyra",
       phone: "+5491144556677",
       email: "ivan.pereyra@gmail.com",
@@ -149,10 +268,9 @@ export function getMockOrders(now: Date = new Date()): Order[] {
       items: makeItems({ pollo: 4 }),
       ...totals(makeItems({ pollo: 4 })),
       status: "paid",
-      createdAt: at(0, 18, 10),
     },
     {
-      id: "RK-2613",
+      _id: "RK-002613",
       customerName: "Lucía Méndez",
       phone: "+5491166112233",
       email: "lu.mendez@gmail.com",
@@ -163,20 +281,30 @@ export function getMockOrders(now: Date = new Date()): Order[] {
       items: makeItems({ carne: 2, pollo: 2 }),
       ...totals(makeItems({ carne: 2, pollo: 2 })),
       status: "delivered",
-      createdAt: at(-2, 15, 0),
     },
   ];
 
-  return orders.sort((a, b) => a.deliveryAt.getTime() - b.deliveryAt.getTime());
+  for (const m of mocks) {
+    await sql`
+      INSERT INTO orders (
+        id, customer_name, phone, email, address, apartment, neighborhood, notes,
+        delivery_at, delivery_slot, items, subtotal, shipping, total, status
+      ) VALUES (
+        ${m._id}, ${m.customerName}, ${m.phone}, ${m.email}, ${m.address},
+        ${m.apartment ?? null}, ${m.neighborhood}, ${m.notes ?? null},
+        ${m.deliveryAt.toISOString()}, ${m.deliverySlot},
+        ${JSON.stringify(m.items)}::jsonb,
+        ${m.subtotal}, ${m.shipping}, ${m.total},
+        ${m.status ?? "paid"}
+      )
+    `;
+  }
+
+  return { inserted: mocks.length, alreadyHadOrders: false };
 }
 
-export function getMockOrderById(id: string): Order | undefined {
-  return getMockOrders().find((o) => o.id === id);
-}
+// ─── Mensajes WhatsApp ──────────────────────────────────────────────────────
 
-/**
- * Mensaje pre-armado para WhatsApp al cliente cuando sale el delivery.
- */
 export function buildOutForDeliveryMessage(order: Order): string {
   const firstName = order.customerName.split(" ")[0];
   const lines = [

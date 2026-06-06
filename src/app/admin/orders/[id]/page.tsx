@@ -14,7 +14,7 @@ import { config, formatARS } from "@/lib/config";
 import {
   buildOutForDeliveryMessage,
   buildWhatsappUrl,
-  getMockOrderById,
+  getOrderById,
   statusMeta,
   type Order,
 } from "@/lib/orders";
@@ -27,7 +27,7 @@ export default async function AdminOrderDetail({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const order = getMockOrderById(id);
+  const order = await getOrderById(id);
 
   if (!order) return notFound();
 

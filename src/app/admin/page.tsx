@@ -4,7 +4,7 @@ import { es } from "date-fns/locale";
 import { ChevronRight, Clock, MapPin } from "lucide-react";
 import { formatARS } from "@/lib/config";
 import {
-  getMockOrders,
+  listOrders,
   statusMeta,
   type Order,
   type OrderStatus,
@@ -12,9 +12,8 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export default function AdminHome() {
-  const now = new Date();
-  const orders = getMockOrders(now);
+export default async function AdminHome() {
+  const orders = await listOrders();
 
   const upcoming = orders.filter((o) => o.status !== "delivered");
   const delivered = orders.filter((o) => o.status === "delivered");
@@ -84,9 +83,10 @@ export default function AdminHome() {
 
 function DemoBanner() {
   return (
-    <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
-      Vista previa con <strong>pedidos inventados</strong>. Cuando conectemos la
-      base de datos, esto va a mostrar los pedidos reales en tiempo real.
+    <div className="rounded-xl border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-xs text-sky-200">
+      Modo testing: la base de datos está conectada pero todavía no cobra plata
+      real. Los pedidos reales van a aparecer acá apenas pruebes el flujo de
+      checkout.
     </div>
   );
 }

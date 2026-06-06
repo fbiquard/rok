@@ -77,13 +77,40 @@ export function CheckoutForm({ cart, backHref }: Props) {
 
     setSubmitting(true);
     try {
-      // TODO: conectar /api/create-preference en la próxima tarea.
-      console.log("Pedido listo para MP:", { form, cart });
-      await new Promise((r) => setTimeout(r, 600));
-      toast.success(
-        "Pedido armado. Próximo paso: conectar Mercado Pago para cobrar.",
-      );
-    } finally {
+      const cartMap: Record<string, number> = {};
+      for (const item of cart.items) {
+        cartMap[item.key] = item.qty;
+      }
+
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerName: form.fullName,
+          phone: form.phone,
+          email: form.email,
+          address: form.street,
+          apartment: form.apartment || undefined,
+          neighborhood: form.neighborhood,
+          notes: form.notes || undefined,
+          deliveryDate: form.deliveryDate,
+          deliverySlot: form.deliverySlot,
+          cart: cartMap,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || "No pudimos guardar tu pedido. Probá de nuevo.");
+        setSubmitting(false);
+        return;
+      }
+
+      const data = (await res.json()) as { id: string; total: number };
+      window.location.href = `/gracias?id=${data.id}`;
+    } catch (err) {
+      console.error(err);
+      toast.error("Error de conexión. Probá de nuevo.");
       setSubmitting(false);
     }
   };
