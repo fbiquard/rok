@@ -72,7 +72,10 @@ function Configurator() {
           priority
           className="mx-auto -mt-10 h-24 w-auto mix-blend-screen sm:h-28"
         />
-        <p className="mx-auto mt-3 max-w-md text-balance px-6 text-sm leading-relaxed text-muted-foreground">
+        <p
+          className="mx-auto mt-5 max-w-xl text-balance px-6 text-xl font-normal leading-snug text-foreground/90 sm:text-2xl"
+          style={{ fontFamily: "Helvetica, Arial, sans-serif" }}
+        >
           {config.business.intro}
         </p>
       </header>
